@@ -9,8 +9,8 @@ Pod::Spec.new do |s|
   s.description    = package['description']
   s.license        = package['license']
   s.author         = package['author']
-  s.homepage       = 'https://github.com/brentvatne/react-native-video'
-  s.source       = { :git => "https://github.com/brentvatne/react-native-video.git", :tag => "#{s.version}" }
+  s.homepage       = 'https://github.com/react-native-community/react-native-video'
+  s.source       = { :git => "https://github.com/react-native-community/react-native-video.git", :tag => "#{s.version}" }
 
   s.ios.deployment_target = "8.0"
   s.tvos.deployment_target = "9.0"
@@ -26,6 +26,14 @@ Pod::Spec.new do |s|
     ss.dependency "DVAssetLoaderDelegate", "~> 0.3.1"
 
     ss.source_files = "ios/VideoCaching/**/*.{h,m}"
+    s.static_framework = true
+  end
+  
+  s.subspec "VideoAds" do |ss|
+    ss.dependency "react-native-video/Video"
+    ss.dependency "GoogleAds-IMA-iOS-SDK", "~> 3.9"
+
+    ss.source_files = "ios/VideoAds/**/*.{h,m}"    
     s.static_framework = true
   end
 

@@ -5,6 +5,7 @@
 #import <React/UIView+React.h>
 #include <MediaAccessibility/MediaAccessibility.h>
 #include <AVFoundation/AVFoundation.h>
+#include "RCTVideoAdsManager.h"
 
 static NSString *const statusKeyPath = @"status";
 static NSString *const playbackLikelyToKeepUpKeyPath = @"playbackLikelyToKeepUp";
@@ -81,6 +82,8 @@ static int const RCTVideoUnset = -1;
   void (^__strong _Nonnull _restoreUserInterfaceForPIPStopCompletionHandler)(BOOL);
   AVPictureInPictureController *_pipController;
 #endif
+  
+  RCTVideoAdsManager *_adsManager;
 }
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher
@@ -365,8 +368,16 @@ static int const RCTVideoUnset = -1;
         [_player removeObserver:self forKeyPath:externalPlaybackActive context:nil];
         _isExternalPlaybackActiveObserverRegistered = NO;
       }
-        
-      _player = [AVPlayer playerWithPlayerItem:_playerItem];
+      
+      // Reuse player for casting and fullscreen purpose
+      if (_player) {
+        [_player replaceCurrentItemWithPlayerItem:_playerItem];
+      } else {
+        _player = [AVPlayer playerWithPlayerItem:_playerItem];
+        _adsManager = [[RCTVideoAdsManager alloc] initWithVideo:self player:_player];
+        _paused = YES;
+        [_adsManager requestAds];
+      }
       _player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
         
       [_player addObserver:self forKeyPath:playbackRate options:0 context:nil];
@@ -388,6 +399,7 @@ static int const RCTVideoUnset = -1;
                                     @"target": self.reactTag
                                 });
       }
+      
     }];
   });
   _videoLoadStarted = YES;
