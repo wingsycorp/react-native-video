@@ -653,6 +653,10 @@ static int const RCTVideoUnset = -1;
                              @"audioTracks": [self getAudioTrackInfo],
                              @"textTracks": [self getTextTrackInfo],
                              @"target": self.reactTag});
+        } else if (_playerItem.presentationSize.height) {
+          width = [NSNumber numberWithFloat:_playerItem.presentationSize.width];
+          height = [NSNumber numberWithFloat:_playerItem.presentationSize.height];
+          orientation = width > height ? @"landscape" : @"portrait";
         }
         _videoLoadStarted = NO;
         
