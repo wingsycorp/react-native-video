@@ -12,6 +12,7 @@ static NSString *const playbackBufferEmptyKeyPath = @"playbackBufferEmpty";
 static NSString *const readyForDisplayKeyPath = @"readyForDisplay";
 static NSString *const playbackRate = @"rate";
 static NSString *const timedMetadata = @"timedMetadata";
+static NSString *const presentationSize = @"presentationSize";
 static NSString *const externalPlaybackActive = @"externalPlaybackActive";
 
 static int const RCTVideoUnset = -1;
@@ -320,6 +321,7 @@ static int const RCTVideoUnset = -1;
   [_playerItem addObserver:self forKeyPath:playbackBufferEmptyKeyPath options:0 context:nil];
   [_playerItem addObserver:self forKeyPath:playbackLikelyToKeepUpKeyPath options:0 context:nil];
   [_playerItem addObserver:self forKeyPath:timedMetadata options:NSKeyValueObservingOptionNew context:nil];
+  [_playerItem addObserver:self forKeyPath:presentationSize options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
   _playerItemObserversSet = YES;
 }
 
@@ -333,6 +335,7 @@ static int const RCTVideoUnset = -1;
     [_playerItem removeObserver:self forKeyPath:playbackBufferEmptyKeyPath];
     [_playerItem removeObserver:self forKeyPath:playbackLikelyToKeepUpKeyPath];
     [_playerItem removeObserver:self forKeyPath:timedMetadata];
+    [_playerItem removeObserver:self forKeyPath:presentationSize];
     _playerItemObserversSet = NO;
   }
 }
@@ -585,9 +588,15 @@ static int const RCTVideoUnset = -1;
     return;
   }
   if (object == _playerItem) {
+    if ([keyPath isEqualToString:presentationSize]) {
+      CGSize oldSize = [[change objectForKey:NSKeyValueChangeOldKey] CGSizeValue];
+      CGSize size = [[change objectForKey:NSKeyValueChangeNewKey] CGSizeValue];
+      if (size.width != oldSize.width && self.onBandwidthUpdate) {
+        self.onBandwidthUpdate(@{@"size": [NSString stringWithFormat:@"%dx%d", (int) size.width, (int) size.height]});
+      }
     // When timeMetadata is read the event onTimedMetadata is triggered
-    if ([keyPath isEqualToString:timedMetadata]) {
-      NSArray<AVMetadataItem *> *items = [change objectForKey:@"new"];
+    } else if ([keyPath isEqualToString:timedMetadata]) {
+      NSArray<AVMetadataItem *> *items = [change objectForKey:NSKeyValueChangeNewKey];
       if (items && ![items isEqual:[NSNull null]] && items.count > 0) {
         NSMutableArray *array = [NSMutableArray new];
         for (AVMetadataItem *item in items) {
