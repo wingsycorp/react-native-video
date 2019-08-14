@@ -29,7 +29,7 @@ static int const RCTVideoUnset = -1;
   AVPlayerItem *_playerItem;
   NSDictionary *_source;
   BOOL _playerItemObserversSet;
-  BOOL _playerBufferEmpty;
+  BOOL _playerWasPausedDueToBuffering;
   AVPlayerLayer *_playerLayer;
   BOOL _playerLayerObserverSet;
   RCTVideoPlayerViewController *_playerViewController;
@@ -102,7 +102,6 @@ static int const RCTVideoUnset = -1;
     _lastSeekTime = 0.0f;
     _progressUpdateInterval = 250;
     _controls = NO;
-    _playerBufferEmpty = YES;
     _playInBackground = false;
     _allowsExternalPlayback = YES;
     _playWhenInactive = false;
@@ -678,15 +677,19 @@ static int const RCTVideoUnset = -1;
                             @"target": self.reactTag});
       }
     } else if ([keyPath isEqualToString:playbackBufferEmptyKeyPath]) {
-      _playerBufferEmpty = YES;
-      self.onVideoBuffer(@{@"isBuffering": @(YES), @"target": self.reactTag});
-    } else if ([keyPath isEqualToString:playbackLikelyToKeepUpKeyPath]) {
-      // Continue playing (or not if paused) after being paused due to hitting an unbuffered zone.
-      if ((!(_controls || _fullscreenPlayerPresented) || _playerBufferEmpty) && _playerItem.playbackLikelyToKeepUp) {
-        [self setPaused:_paused];
+      if (_playerItem.playbackBufferEmpty) {
+        _playerWasPausedDueToBuffering = !_paused;
+        self.onVideoBuffer(@{@"isBuffering": @(YES), @"target": self.reactTag});
       }
-      _playerBufferEmpty = NO;
-      self.onVideoBuffer(@{@"isBuffering": @(NO), @"target": self.reactTag});
+    } else if ([keyPath isEqualToString:playbackLikelyToKeepUpKeyPath]) {
+      if (_playerItem.playbackLikelyToKeepUp) {
+        self.onVideoBuffer(@{@"isBuffering": @(NO), @"target": self.reactTag});
+        // Continue playing after being paused due to hitting an unbuffered zone.
+        if (_playerWasPausedDueToBuffering && !_paused) {
+          [self setPaused:NO];
+        }
+        _playerWasPausedDueToBuffering = NO;
+      }
     }
   } else if (object == _player) {
     if([keyPath isEqualToString:playbackRate]) {
