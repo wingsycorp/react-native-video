@@ -367,8 +367,12 @@ static int const RCTVideoUnset = -1;
         [_player removeObserver:self forKeyPath:externalPlaybackActive context:nil];
         _isExternalPlaybackActiveObserverRegistered = NO;
       }
-        
-      _player = [AVPlayer playerWithPlayerItem:_playerItem];
+      
+      if (_player) {
+        [_player replaceCurrentItemWithPlayerItem:_playerItem];
+      } else {
+        _player = [AVPlayer playerWithPlayerItem:_playerItem];
+      }
       _player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
       _player.automaticallyWaitsToMinimizeStalling = false;
       
