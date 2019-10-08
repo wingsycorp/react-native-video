@@ -635,6 +635,7 @@ class ReactExoplayerView extends FrameLayout implements
                 text += "unknown";
                 break;
         }
+        eventEmitter.playbackRateChange(playWhenReady && playbackState == ExoPlayer.STATE_READY ? 1.0f : 0.0f);
         Log.d(TAG, text);
     }
 
