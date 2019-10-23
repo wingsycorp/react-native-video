@@ -653,6 +653,11 @@ static int const RCTVideoUnset = -1;
           height = [NSNumber numberWithFloat:_playerItem.presentationSize.height];
           orientation = width > height ? @"landscape" : @"portrait";
         }
+
+        if (_pendingSeekTime) {
+          [self setCurrentTime:_pendingSeekTime];
+          _pendingSeekTime = 0;
+        }
         
         if (self.onVideoLoad && _videoLoadStarted) {
           self.onVideoLoad(@{@"duration": [NSNumber numberWithFloat:duration],
